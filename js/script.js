@@ -1,48 +1,60 @@
-let cartCount = 0;
-let cartItems = [];
 const productImageBase = "./images/";
-const productTitle = "Classy Modern Smart Watch";
-
+const ringButtons = document.querySelectorAll(".ring-button");
+const productImage = document.getElementById("product-image");
 // Change the main image based on color
-const changeThumbnailColor = (color) => {
-  const productImage = document.getElementById("product-image");
-  const colors = ["purple", "teal", "cyan", "gray"];
+for (let i = 0; i < ringButtons.length; i++) {
+  let button = ringButtons[i];
+  button.addEventListener("click", function (event) {
+    const color = event.target.id.replace("-color", "");
+    for (let j = 0; j < ringButtons.length; j++) {
+      ringButtons[j].classList.remove("border-purple-600");
+      ringButtons[j].classList.add("border-gray-300");
+    }
+    event.target.classList.add("border-purple-600");
+    event.target.classList.remove("border-gray-300");
 
-  colors.forEach((c) => {
-    const button = document.getElementById(`${c}-color`);
-    button.classList.toggle("border-purple-600", color === c);
+    // productImage.src = "./images/cyan.png";
+    // productImage.src = "./images/" + color + ".png";
+    productImage.src = productImageBase + color + ".png";
   });
-
-  // Change the image based on selected color
-  productImage.src = `${productImageBase}${color}.png`;
-};
+}
 
 // Select wrist size
-const selectWristSize = (size) => {
+function selectWristSize(size) {
   const sizes = ["S", "M", "L", "XL"];
-
-  sizes.forEach((s) => {
-    const button = document.getElementById(`size-${s}`);
-    button.classList.toggle("border-purple-600", size === s);
-  });
-};
+  for (let i = 0; i < sizes.length; i++) {
+    const button = document.getElementById("size-" + sizes[i]);
+    if (size === sizes[i]) {
+      button.classList.add("border-purple-600");
+    } else {
+      button.classList.remove("border-purple-600");
+    }
+  }
+}
 
 // Update the quantity
-const updateQuantity = (amount) => {
-  const quantityElement = document.getElementById("quantity");
-  const quantity = Math.max(0, parseInt(quantityElement.innerText) + amount);
-  quantityElement.innerText = quantity;
-};
+const quantityButtons = document.querySelectorAll(".quantity-button");
+const quantityElement = document.getElementById("quantity");
+for (let i = 0; i < quantityButtons.length; i++) {
+  const button = quantityButtons[i];
+  button.addEventListener("click", function (event) {
+    const amount = event.target.innerText === "+" ? 1 : -1;
+    const currentQuantity = parseInt(quantityElement.innerText);
+    const newQuantity = Math.max(0, currentQuantity + amount);
+    quantityElement.innerText = newQuantity;
+  });
+}
 
+let cartCount = 0;
+let cartItems = [];
+const productTitle = "Classy Modern Smart Watch";
 // Add item to cart
-const addToCart = () => {
+document.getElementById("add-to-cart").addEventListener("click", function () {
   const quantity = parseInt(document.getElementById("quantity").innerText);
-
   if (quantity > 0) {
-    cartCount += quantity;
+    cartCount = cartCount + quantity;
     document.getElementById("cart-count").innerText = cartCount;
     document.getElementById("checkout-container").classList.remove("hidden");
-
     const selectedColorButton = document.querySelector(
       "button.border-purple-600.w-6"
     );
@@ -55,71 +67,64 @@ const addToCart = () => {
     );
     const selectedSize = selectedSizeButton
       ? selectedSizeButton.innerText.split(" ")[0]
-      : "M";
+      : "S";
+    const selectedPrice = selectedSizeButton
+      ? selectedSizeButton.innerText.split(" ")[1].split("$")[1]
+      : 69;
 
-    // Add the item to the cart
     cartItems.push({
-      image: `${selectedColor}.png`,
+      image: selectedColor + ".png",
       title: productTitle,
       color: selectedColor,
       size: selectedSize,
-      quantity,
-      price: 79,
+      quantity: quantity,
+      price: quantity * parseInt(selectedPrice),
     });
   }
-};
+});
 
 // Open cart modal
-const openCartModal = () => {
+document.getElementById("checkout-btn").addEventListener("click", function () {
   const cartModal = document.getElementById("cart-modal");
   const cartItemsContainer = document.getElementById("cart-items");
+  cartItemsContainer.innerHTML = "";
 
-  cartItemsContainer.innerHTML = ""; // Clear previous cart items
-
-  let totalPrice = 0;
-  let totalQuantity = 0;
-
-  cartItems.forEach(({ image, title, color, size, quantity, price }) => {
+  for (let i = 0; i < cartItems.length; i++) {
+    const item = cartItems[i];
+    console.log(item);
     const row = document.createElement("tr");
     row.classList.add("border-b");
     row.innerHTML = `
-      <td class="py-2 px-4">
+    <td class="py-2 px-4">
         <div class="flex items-center space-x-2">
-          <img src="${productImageBase}${image}" alt="${title}" class="w-12 h-12 object-cover rounded-md" />
-          <span class="font-semibold">${title}</span>
+            <img src="${productImageBase}${
+      item.image
+    }" alt="" class="w-12 h-12 object-cover rounded-md"/>
+            <span class="font-semibold">${item.title}</span>
         </div>
-      </td>
-      <td class="py-2 px-4">${color}</td>
-      <td class="py-2 px-4">${size}</td>
-      <td class="py-2 px-4">${quantity}</td>
-      <td class="py-2 px-4">$${(price * quantity).toFixed(2)}</td>
+    </td>
+    <td class="py-2 px-4">${item.color}</td>
+    <td class="py-2 px-4">${item.size}</td>
+    <td class="py-2 px-4">${item.quantity}</td>
+    <td class="py-2 px-4">$${item.price.toFixed(2)}</td>
     `;
     cartItemsContainer.appendChild(row);
-
-    totalPrice += price * quantity;
-    totalQuantity += quantity;
-  });
-
-  const totalRow = document.createElement("tr");
-  totalRow.classList.add("border-t", "font-bold");
-  totalRow.innerHTML = `
-    <td class="py-2 px-4" colspan="3">Total</td> 
-    <td class="py-2 px-4">${totalQuantity}</td>
-    <td class="py-2 px-4">$${totalPrice.toFixed(2)}</td>
-  `;
-  cartItemsContainer.appendChild(totalRow);
+  }
 
   cartModal.classList.remove("hidden");
-};
+});
 
 // Close cart modal
-const closeCartModal = () => {
-  const cartModal = document.getElementById("cart-modal");
-  cartModal.classList.add("hidden");
-};
-
-// Continue shopping (just close the modal)
-const continueShopping = () => closeCartModal();
+document
+  .getElementById("continue-shopping")
+  .addEventListener("click", function () {
+    document.getElementById("cart-modal").classList.add("hidden");
+  });
 
 // Proceed to checkout
-const checkout = () => alert("Proceeding to checkout...");
+document.getElementById("checkout").addEventListener("click", function () {
+  const res = confirm("Proceeding to checkout...");
+  if (res) {
+    document.getElementById("cart-modal").classList.add("hidden");
+  }
+});
